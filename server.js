@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
+import questionAndAnswerRoutes from "./routes/questionandanswer.js";
 
 dotenv.config();
 const app = express();
@@ -12,11 +13,13 @@ const port = process.env.PORT || 3002;
 const hostname = process.env.HOST || "localhost";
 
 app.use(cors({
-  origin: "http://localhost:3003",
+  origin: "http://localhost:3000",
   credentials: true, // important to allow cookies
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+
 
 
 // MongoDB connection
@@ -34,6 +37,7 @@ mongoose
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/questions_and_answers", questionAndAnswerRoutes);
 
 app.listen(port, hostname, () => {
     console.log(`Server is running at http://${hostname}:${port}/`);

@@ -1,11 +1,11 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey:process.env.OPENAI_API_KEY,  
-
+export async function generatePersonalityResult(allAnswers) {
+  // ✅ Create client lazily so dotenv has already populated process.env
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
   });
 
-export async function generatePersonalityResult(allAnswers) {
   const prompt = `
 You are a smart creator-aligned personality engine for Beyond.
 
@@ -20,7 +20,7 @@ Match tone to modern creators: emotionally intelligent, sharp, never cheesy. Cel
 Page 1: 3 bold identity traits (max 12 characters each)
 Page 2: MBTI code, Archetype Title (exactly 2 words), 90–100 word intro paragraph (max 700 chars)
 Page 3:
-  - 2 insight lines ( 90 - 100 characters each)
+  - 2 insight lines (90–100 characters each)
   - 1 inner insight paragraph (300–350 characters)
 Page 4: 1 bold affirmation line (max 120 characters)
 Page 5:

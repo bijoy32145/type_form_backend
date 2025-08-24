@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import questionAndAnswerRoutes from "./routes/questionandanswer.js";
+import personalityRoutes from "./routes/personality.js";
 
 dotenv.config();
 const app = express();
@@ -31,13 +32,13 @@ mongoose
   })
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
     process.exit(1); // Stop the app if DB fails
   });
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/questions_and_answers", questionAndAnswerRoutes);
+app.use("/api/personality", personalityRoutes);
 
 app.listen(port, hostname, () => {
     console.log(`Server is running at http://${hostname}:${port}/`);

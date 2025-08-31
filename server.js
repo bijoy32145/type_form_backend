@@ -15,25 +15,35 @@ const hostname = process.env.HOST || "localhost";
 
 app.use(cors({
   origin: "http://localhost:3000",
-  credentials: true, // important to allow cookies
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
 
-
-
-
-// MongoDB connection
+// MongoDB connection - FIXED VERSION
 const mongoURI = process.env.MONGO_URI;
-mongoose
-  .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+console.log("Connecting to MongoDB..."); // Debug line
+
+mongoose.connect(mongoURI)
+  .then(() => {
+    console.log("✅ Connected to MongoDB Atlas");
   })
-  .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => {
-    process.exit(1); // Stop the app if DB fails
+    console.error("❌ MongoDB connection failed:");
+    console.error("Error message:", err.message);
+    console.error("Error code:", err.code);
+    console.error("Full error:", err);
+    process.exit(1);
   });
+
+// Handle connection events
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -41,5 +51,5 @@ app.use("/api/questions_and_answers", questionAndAnswerRoutes);
 app.use("/api/personality", personalityRoutes);
 
 app.listen(port, hostname, () => {
-    console.log(`Server is running at http://${hostname}:${port}/`);
-  });
+  console.log(`Server is running at http://${hostname}:${port}/`);
+});

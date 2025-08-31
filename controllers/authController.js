@@ -9,60 +9,63 @@ class AuthController {
    */
   static async googleLogin(req, res) {
     try {
-      const { token } = req.body; // <-- This is access_token from frontend
-
+      const { token, referrerCode } = req.body; // ✅ get referrerCode from frontend if exists
+  
       if (!token) {
         return res.status(400).json({ message: "No token provided" });
       }
-
-      console.log(token, "🚀 Google login request received");
-      // 1️⃣ Fetch Google profile using access_token
+  
+      // 1️⃣ Fetch Google profile
       const googleRes = await axios.get(
         "https://www.googleapis.com/oauth2/v3/userinfo",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log(googleRes.data, "🚀 Google profile fetched");
-
-      const { sub, email, name, picture, } = googleRes.data;
-
-      // // 2️⃣ Find or create user
+  
+      const { sub, email, name, picture } = googleRes.data;
+  
+      // 2️⃣ Find or create user
       let user = await User.findOne({ googleId: sub });
-      console.log(user, "🚀 User found or created");
+  
       if (!user) {
+        let referrer = null;
+        if (referrerCode) {
+          referrer = await User.findOne({ referralCode: referrerCode });
+        }
+  
         user = await User.create({
           googleId: sub,
           email,
           name,
-          picture
-          
+          picture,
+          whoReferred: referrer ? referrer._id : null, // ✅ store referrer if valid
         });
+  
+        // ✅ reward referrer immediately if found
+        if (referrer) {
+          await User.findByIdAndUpdate(referrer._id, { $inc: { gp: 500 } });
+        }
       }
-
-      console.log(user, "🚀 User created");
-
-      // 3️⃣ Create your JWT
+  
+      // 3️⃣ Create JWT
       const jwtPayload = { id: user._id, email: user.email };
       const jwtToken = jwt.sign(jwtPayload, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
-
-      // 4️⃣ Send as cookie + JSON
+  
       res.cookie("token", jwtToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
-      return res.status(200).json({ data:user,message: "Login successful" });
+  
+      return res.status(200).json({ data: user, message: "Login successful" });
     } catch (err) {
       console.error("Google login error:", err.response?.data || err.message);
       return res.status(401).json({ message: "Invalid Google token" });
     }
   }
+  
 
    static async updateUserProgress(req, res) {
     try {
@@ -139,6 +142,31 @@ static async rewardReferrer(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
+static async updateUser(req, res) {
+  try {
+    const { userId, firstName, lastName, gender, dob, whatsapp } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { firstName, lastName, gender, dob, whatsapp },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update user", details: err.message });
+  }
+}
+
+
 
 }
 
